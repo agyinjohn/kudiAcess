@@ -138,16 +138,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             onPressed: () {
                               Navigator.pop(context);
                             },
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.chevron_left_rounded,
-                              color: Color.fromRGBO(243, 156, 18, 3),
+                              color: colorState.generatedColors[1],
                             ),
                           ),
-                          const Text(
+                          Text(
                             'Edit Profile',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Color.fromRGBO(243, 156, 18, 3),
+                              color: colorState.generatedColors[1],
                             ),
                           ),
                         ],
@@ -178,8 +178,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 child: Container(
                                   height: 40,
                                   width: 40,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.blue,
+                                  decoration: BoxDecoration(
+                                    color: colorState.generatedColors[1],
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(
@@ -261,8 +261,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             Navigator.pop(context);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue, // Background color
-                            foregroundColor: Colors.white, // Text color
+                            backgroundColor: colorState
+                                .generatedColors[1], // Background color
+                            foregroundColor:
+                                colorState.generatedColors[0], // Text color
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
                                   12), // Custom border radius
@@ -270,9 +272,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 34, vertical: 22), // Custom padding
                           ),
-                          child: const Text(
+                          child: Text(
                             'Save Changes',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(
+                                color: colorState.generatedColors[0],
+                                fontSize: 16),
                           ),
                         ),
                       ),

@@ -4,6 +4,7 @@ import 'package:kudiaccess/screens/logout.dart';
 import 'package:kudiaccess/screens/profile.dart';
 
 import '../providers/color_providers.dart';
+import 'chat.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -27,17 +28,13 @@ class SettingsScreen extends ConsumerWidget {
                       onPressed: () {
                         Navigator.pop(context);
                       },
-                      icon: const Icon(
-                        Icons.chevron_left_rounded,
-                        color: Color.fromRGBO(243, 156, 18, 3),
-                      ),
+                      icon: Icon(Icons.chevron_left_rounded,
+                          color: colorState.generatedColors[1]),
                     ),
-                    const Text(
+                    Text(
                       'Settings',
                       style: TextStyle(
-                        fontSize: 18,
-                        color: Color.fromRGBO(243, 156, 18, 3),
-                      ),
+                          fontSize: 18, color: colorState.generatedColors[1]),
                     ),
                   ],
                 ),
@@ -59,7 +56,10 @@ class SettingsScreen extends ConsumerWidget {
                             MaterialPageRoute(
                                 builder: (context) => const ProfileScreen())),
                         child: CustomListTile(
-                          onTap: () {},
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const ProfileScreen())),
                           icon: Icons.person_2_outlined,
                           title: 'Edit Profile',
                         ),
@@ -94,7 +94,10 @@ class SettingsScreen extends ConsumerWidget {
                       CustomListTile(
                         icon: Icons.help_outline_rounded,
                         title: 'Help & Support',
-                        onTap: () {},
+                        onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const ChatScreen())),
                       ),
                       const Divider(color: Colors.grey),
                       CustomListTile(

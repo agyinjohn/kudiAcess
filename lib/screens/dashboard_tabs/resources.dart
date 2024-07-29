@@ -15,22 +15,23 @@ class ResourcesScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: colorState.baseColor,
-      body: const SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              BuildHeader(),
-              SizedBox(height: 16),
+              const BuildHeader(),
+              const SizedBox(height: 16),
               Center(
                 child: Text(
                   'Financial Literacy',
-                  style: TextStyle(color: Colors.blueGrey, fontSize: 18),
+                  style: TextStyle(
+                      color: colorState.generatedColors[1], fontSize: 18),
                 ),
               ),
-              SizedBox(height: 18),
-              ArticleCard(
+              const SizedBox(height: 18),
+              const ArticleCard(
                 mainText: 'Aenean Aliquet Est Eu Ullamcorper Rutrum...',
                 quoteText: 'Lorem Ipsum Dolor Sit Amet...',
                 author: 'Mr. Frimpong',
@@ -44,20 +45,21 @@ class ResourcesScreen extends ConsumerWidget {
   }
 }
 
-class BuildHeader extends StatelessWidget {
+class BuildHeader extends ConsumerWidget {
   const BuildHeader({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorState = ref.watch(colorProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const SizedBox(width: 10),
-        const Text(
+        Text(
           'Resources',
           style: TextStyle(
             fontSize: 18,
-            color: Color.fromRGBO(243, 156, 18, 3),
+            color: colorState.generatedColors[1],
           ),
         ),
         const Spacer(),
@@ -109,7 +111,7 @@ class BuildHeader extends StatelessWidget {
   }
 }
 
-class ArticleCard extends StatelessWidget {
+class ArticleCard extends ConsumerWidget {
   final String mainText;
   final String quoteText;
   final String author;
@@ -124,7 +126,8 @@ class ArticleCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorState = ref.watch(colorProvider);
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
@@ -165,13 +168,13 @@ class ArticleCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16.0, vertical: 8.0),
-                    decoration: const BoxDecoration(
-                      color: Colors.orange,
+                    decoration: BoxDecoration(
+                      color: colorState.baseColor,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Read More',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colorState.generatedColors[1],
                         fontWeight: FontWeight.bold,
                       ),
                     ),
