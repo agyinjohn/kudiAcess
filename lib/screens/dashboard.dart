@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kudiaccess/providers/color_providers.dart';
 import 'package:kudiaccess/screens/dashboard_tabs/budget.dart';
-import 'package:kudiaccess/screens/chat.dart';
+
 import 'package:kudiaccess/screens/dashboard_tabs/history.dart';
 import 'package:kudiaccess/screens/dashboard_tabs/payment.dart';
 import 'package:kudiaccess/screens/dashboard_tabs/resources.dart';

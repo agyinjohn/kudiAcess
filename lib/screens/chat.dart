@@ -1,11 +1,15 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../models/message.dart';
 import '../providers/color_providers.dart';
-// import '../utils/commons/chat_handler.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -18,88 +22,154 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late User _user;
-  final List<Message> _messages = []; // Updated to hold Message objects
+  final List<Message> _messages = [];
+  StreamSubscription<QuerySnapshot>? _chatSubscription;
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
 
   @override
   void initState() {
     super.initState();
     _user = _auth.currentUser!;
-    _loadInitialMessages(); // Load initial messages from Firestore
+    _speech = stt.SpeechToText();
+    _loadInitialMessages();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+    _chatSubscription?.cancel();
   }
 
   Future<void> _loadInitialMessages() async {
-    // Listen for real-time updates from Firestore
-    FirebaseFirestore.instance
+    _chatSubscription = FirebaseFirestore.instance
         .collection('chats')
         .doc(_user.uid)
         .collection('messages')
-        .orderBy('timestamp')
+        .orderBy('createdAt')
         .snapshots()
         .listen((snapshot) {
-      setState(() {
-        _messages.clear();
-        for (var doc in snapshot.docs) {
-          final messageData = doc.data();
-          _messages.add(Message(
-            text: messageData['text'],
-            sender: messageData['sender'] == _user.uid
-                ? MessageSender.user
-                : MessageSender.ai,
-          ));
-        }
-      });
+      if (mounted) {
+        setState(() {
+          _messages.clear();
+          for (var doc in snapshot.docs) {
+            final messageData = doc.data();
+            _messages.add(Message(
+              text: messageData['content'],
+              sender: messageData['role'] == 'user'
+                  ? MessageSender.user
+                  : MessageSender.ai,
+            ));
+          }
+        });
+      }
     });
+  }
+
+  Future<String> getPostResultFromApi({
+    required String userId,
+    required String message,
+  }) async {
+    var url = 'https://chatgpt-api8.p.rapidapi.com/';
+    var headers = {
+      'content-type': 'application/json',
+      'X-RapidAPI-Key': '7f1ef9e40bmshb133680f5a095e7p1ff3aejsnc22cdfa1f0e2',
+      'X-RapidAPI-Host': 'chatgpt-api8.p.rapidapi.com',
+    };
+
+    String responseText = '';
+    message =
+        'Please you are suppose to provide answers to people who are using kudiAcces mobile which was created to handle their fanancial records and this is their questions, reply them as finacial trained model for handling fanacial issues question: ${message}';
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: json.encode([
+          {'content': message, 'role': 'user'}
+        ]),
+      );
+      print(response.body);
+      Map<String, dynamic> jsonResponse =
+          json.decode(utf8.decode(response.bodyBytes));
+      if (jsonResponse['error'] != null) {
+        throw HttpException(jsonResponse['error']["message"]);
+      }
+      if (jsonResponse.isNotEmpty) {
+        responseText = jsonResponse['text'];
+      }
+    } catch (e) {
+      print(e);
+    }
+
+    return responseText;
+  }
+
+  Future<void> saveMessage(String userId, Map<String, dynamic> message) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(userId)
+          .collection('messages')
+          .add(message);
+    } catch (e) {
+      print('Error saving message: $e');
+    }
   }
 
   void _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    // Clear the input field immediately
     _controller.clear();
 
-    // Add user message to the local list
+    // Save user's message to Firestore and add to the messages list
+    final userMessage = Message(text: text, sender: MessageSender.user);
     setState(() {
-      _messages.add(Message(text: text, sender: MessageSender.user));
+      _messages.add(userMessage);
+    });
+    await saveMessage(_user.uid, {
+      'content': userMessage.text,
+      'role': 'user',
+      'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Save user message to Firestore
-    await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(_user.uid)
-        .collection('messages')
-        .add({
-      'text': text,
-      'sender': _user.uid,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+    // Call API to get response
+    final aiResponse =
+        await getPostResultFromApi(userId: _user.uid, message: text);
 
-    // Mock an AI response
-    _mockAiResponse();
+    if (mounted) {
+      // Save AI response to Firestore and add to the messages list
+      final aiMessage = Message(text: aiResponse, sender: MessageSender.ai);
+      setState(() {
+        _messages.add(aiMessage);
+      });
+      await saveMessage(_user.uid, {
+        'content': aiMessage.text,
+        'role': 'ai',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
-  void _mockAiResponse() async {
-    // Mock delay for AI response
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Mock AI response
-    const aiResponse = 'This is a mock AI response.';
-
-    // Add AI response to the local list
-    setState(() {
-      _messages.add(Message(text: aiResponse, sender: MessageSender.ai));
-    });
-
-    // Save AI response to Firestore
-    await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(_user.uid)
-        .collection('messages')
-        .add({
-      'text': aiResponse,
-      'sender': 'ai',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('onStatus: $val'),
+        onError: (val) => print('onError: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) => setState(() {
+            _controller.text = val.recognizedWords;
+          }),
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
   }
 
   @override
@@ -166,17 +236,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ),
                       ),
                       maxLines: 1,
+                      onChanged: (text) {
+                        setState(() {});
+                      },
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                CircleAvatar(
-                  backgroundColor: colorState.generatedColors[1],
-                  radius: 25,
-                  child: IconButton(
-                    color: colorState.baseColor,
-                    icon: const Icon(Icons.send),
-                    onPressed: _sendMessage, // Call send message method
+                GestureDetector(
+                  onLongPress: _listen,
+                  onLongPressEnd: (details) {
+                    if (_controller.text.isNotEmpty) {
+                      _sendMessage();
+                    }
+                  },
+                  child: CircleAvatar(
+                    backgroundColor: colorState.generatedColors[1],
+                    radius: 25,
+                    child: GestureDetector(
+                      onTap: _controller.text.isEmpty ? null : _sendMessage,
+                      child: Icon(
+                        _controller.text.isEmpty ? Icons.mic : Icons.send,
+                        color: colorState.baseColor,
+                      ),
+                    ),
                   ),
                 ),
               ],
