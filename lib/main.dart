@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kudiaccess/firebase_options.dart';
+import 'package:kudiaccess/screens/dashboard.dart';
 import 'package:kudiaccess/screens/splashscreen.dart';
 
 Future<void> main() async {

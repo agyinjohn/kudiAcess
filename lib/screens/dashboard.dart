@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kudiaccess/providers/color_providers.dart';
 import 'package:kudiaccess/screens/dashboard_tabs/budget.dart';
-import 'package:kudiaccess/screens/dashboard_tabs/chat.dart';
+
 import 'package:kudiaccess/screens/dashboard_tabs/history.dart';
 import 'package:kudiaccess/screens/dashboard_tabs/payment.dart';
 import 'package:kudiaccess/screens/dashboard_tabs/resources.dart';
@@ -124,7 +124,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
     const PaymentsScreen(),
     const BudgetScreen(),
     const ResourcesScreen(),
-    const ChatScreen(),
   ];
 
   @override
@@ -136,9 +135,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
         child: _screens[currentIndex],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.blueGrey[900],
-        selectedItemColor: const Color.fromRGBO(243, 156, 18, 3),
-        unselectedItemColor: Colors.black,
+        backgroundColor: colorState.generatedColors[0],
+        selectedItemColor: colorState.generatedColors[1],
+        unselectedItemColor: colorState.generatedColors[2],
         currentIndex: currentIndex,
         onTap: (index) {
           setState(() {
@@ -167,24 +166,22 @@ class _DashboardPageState extends ConsumerState<DashboardPage>
             icon: Icon(Icons.book),
             label: 'Resources',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'chat',
-          ),
         ],
       ),
       floatingActionButton: currentIndex != 5
           ? AnimatedBuilder(
               animation: _animationController,
               builder: (context, child) => FloatingActionButton(
+                backgroundColor: colorState.generatedColors[0],
                 onPressed: _speechService.isListening
                     ? _stopListening
                     : _startListening,
                 child: Transform.rotate(
                     angle: _animationController.value * 2 * math.pi,
-                    child: Icon(_speechService.isListening
-                        ? Icons.mic
-                        : Icons.mic_off)),
+                    child: Icon(
+                      _speechService.isListening ? Icons.mic : Icons.mic_off,
+                      color: colorState.generatedColors[1],
+                    )),
               ),
             )
           : null,

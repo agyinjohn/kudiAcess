@@ -1,5 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../models/user_model.dart';
+import '../../providers/color_providers.dart';
+import '../../providers/user_provider.dart';
 import '../../widgets/add_payment_modal.dart';
 import '../../widgets/delete_payment.dart';
 import '../../widgets/edit_payment_modal.dart';
@@ -7,14 +12,14 @@ import '../notifications.dart';
 import '../profile.dart';
 import '../settings.dart';
 
-class PaymentsScreen extends StatefulWidget {
+class PaymentsScreen extends ConsumerStatefulWidget {
   const PaymentsScreen({super.key});
 
   @override
-  State<PaymentsScreen> createState() => _PaymentsScreenState();
+  ConsumerState<PaymentsScreen> createState() => _PaymentsScreenState();
 }
 
-class _PaymentsScreenState extends State<PaymentsScreen> {
+class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   final TextEditingController _payBillController = TextEditingController();
   final TextEditingController _controller = TextEditingController();
   final List<String> _selectBillsValues = [
@@ -31,29 +36,54 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     'Mobile Money',
   ];
   String? _selectedValue;
+  String profileImageUrl = "";
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  UserModel? user;
+  Future<void> loadUser() async {
+    final loadedUser = await ref.read(userProvider.notifier).loadUser();
+    setState(() {
+      user = loadedUser;
+    });
+    if (user != null) {
+      print(user!.email);
+      DocumentSnapshot pro = await _firestore
+          .collection("users")
+          .doc(user!.uid)
+          .collection("otherData")
+          .doc("profile")
+          .get();
+      setState(() {
+        profileImageUrl = pro["profileImageUrl"] ?? "";
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _selectedValue = _selectBillsValues.first; // Set default value
     _controller.text = _selectedValue!;
+    loadUser();
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorState = ref.watch(colorProvider);
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(context),
+            _buildHeader(context, ref),
             const SizedBox(height: 20),
             _buildUpcomingBillCard(),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Bill Payment',
-              style: TextStyle(color: Colors.blue, fontSize: 14),
+              style:
+                  TextStyle(color: colorState.generatedColors[1], fontSize: 14),
             ),
             const SizedBox(height: 10),
             const Row(
@@ -72,9 +102,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Pay a bill',
-              style: TextStyle(color: Colors.blue, fontSize: 14),
+              style:
+                  TextStyle(color: colorState.generatedColors[1], fontSize: 14),
             ),
             const SizedBox(height: 10),
             CustomDropdownTextField(
@@ -106,7 +137,8 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                     // Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, // Background color
+                    backgroundColor:
+                        colorState.generatedColors[1], // Background color
                     foregroundColor: Colors.white, // Text color
                     shape: RoundedRectangleBorder(
                       borderRadius:
@@ -123,9 +155,10 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Scheduled Payment',
-              style: TextStyle(color: Colors.blue, fontSize: 14),
+              style:
+                  TextStyle(color: colorState.generatedColors[1], fontSize: 14),
             ),
             const SizedBox(height: 10),
             _buildScheduledPayments(),
@@ -135,17 +168,16 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
     );
   }
 
-  Row _buildHeader(BuildContext context) {
+  Row _buildHeader(BuildContext context, WidgetRef ref) {
+    final colorState = ref.watch(colorProvider);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         const SizedBox(width: 10),
-        const Text(
+        Text(
           'Payments',
-          style: TextStyle(
-            fontSize: 18,
-            color: Color.fromRGBO(243, 156, 18, 3),
-          ),
+          style: TextStyle(fontSize: 18, color: colorState.generatedColors[1]),
         ),
         const Spacer(),
         Row(
@@ -181,12 +213,18 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
                   ),
                 );
               },
-              child: const CircleAvatar(
+              child: CircleAvatar(
+                radius: profileImageUrl.isNotEmpty ? 18 : 20,
                 backgroundColor: Colors.white54,
-                child: Icon(
-                  Icons.person_2_outlined,
-                  color: Colors.black,
-                ),
+                backgroundImage: profileImageUrl.isNotEmpty
+                    ? NetworkImage(profileImageUrl)
+                    : null,
+                child: profileImageUrl.isNotEmpty
+                    ? null
+                    : const Icon(
+                        Icons.person_2_outlined,
+                        color: Colors.black,
+                      ),
               ),
             ),
           ],
@@ -196,6 +234,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   }
 
   Container _buildUpcomingBillCard() {
+    final colorState = ref.watch(colorProvider);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -206,30 +245,30 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Upcoming Bill',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.blue,
+                  color: colorState.generatedColors[1],
                 ),
               ),
               Text(
                 'Electricity',
                 style: TextStyle(
                   fontSize: 10,
-                  color: Colors.blue,
+                  color: colorState.generatedColors[1],
                 ),
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 '₵820.00',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: colorState.generatedColors[1],
                 ),
               ),
             ],
@@ -237,15 +276,15 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
           const Spacer(),
           Container(
             decoration: BoxDecoration(
-              color: Colors.blue.shade100,
+              color: colorState.generatedColors[2],
               borderRadius: BorderRadius.circular(8),
             ),
             child: IconButton(
               highlightColor: Colors.transparent,
               hoverColor: Colors.transparent,
-              icon: const Icon(
+              icon: Icon(
                 Icons.add,
-                color: Colors.blue,
+                color: colorState.generatedColors[0],
               ),
               onPressed: () {
                 showModalBottomSheet(
@@ -362,7 +401,7 @@ class _CustomDropdownTextFieldState extends State<CustomDropdownTextField> {
   }
 }
 
-class BillPaymentItem extends StatelessWidget {
+class BillPaymentItem extends ConsumerWidget {
   final IconData icon;
   final String title;
 
@@ -373,18 +412,20 @@ class BillPaymentItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorState = ref.watch(colorProvider);
+
     return Column(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.blue.shade100,
+            color: colorState.generatedColors[2],
             borderRadius: BorderRadius.circular(8),
           ),
           child: IconButton(
             highlightColor: Colors.transparent,
             hoverColor: Colors.transparent,
-            icon: Icon(icon),
+            icon: Icon(icon, color: colorState.generatedColors[0]),
             onPressed: () {},
           ),
         ),
@@ -397,7 +438,7 @@ class BillPaymentItem extends StatelessWidget {
   }
 }
 
-class PaymentItemRow extends StatelessWidget {
+class PaymentItemRow extends ConsumerWidget {
   final String imagePath;
   final String title;
   final String date;
@@ -412,7 +453,9 @@ class PaymentItemRow extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorState = ref.watch(colorProvider);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -421,7 +464,7 @@ class PaymentItemRow extends StatelessWidget {
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            color: Colors.blue.shade100,
+            color: colorState.generatedColors[1],
             borderRadius: BorderRadius.circular(8),
           ),
           child: Image.asset(imagePath, fit: BoxFit.cover),
