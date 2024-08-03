@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kudiaccess/providers/color_providers.dart';
+import 'package:kudiaccess/screens/fontscreen.dart';
 import '../utils/commons/custom_button.dart';
 import 'pick_colour_tabs/grid_color_picker.dart';
 import 'pick_colour_tabs/sliders_color_picker.dart';
@@ -29,7 +30,7 @@ class PickColorScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       Text(
-                        'Select colours for App',
+                        'Select colour',
                         style: TextStyle(
                           fontSize: 26,
                           color: colorState.generatedColors[2],
@@ -40,7 +41,7 @@ class PickColorScreen extends ConsumerWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const SignUpPage(),
+                                builder: (context) => FontSelectionPage(),
                               ),
                             );
                           },
