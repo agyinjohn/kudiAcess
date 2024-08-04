@@ -81,7 +81,7 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
             _buildUpcomingBillCard(),
             const SizedBox(height: 20),
             Text(
-              'Bill Payment',
+              'Bill Payments',
               style:
                   TextStyle(color: colorState.generatedColors[1], fontSize: 14),
             ),
